@@ -1,31 +1,12 @@
-<template>
-  <div :class="buttonContainer">
-    <Button @click="handleClick">Click Me</Button>
-  </div>
-</template>
-
-<script>
-import DxButton from 'devextreme-vue/button';
-import styles from './styles/Button.scss';
-
-export default {
-  components: {
-    Button
-  },
-  data() {
-    return {
-      buttonContainer: styles.buttonContainer
-    };
-  },
-  methods: {
-    handleClick() {
-      // Handle button click here
-      console.log("Button clicked!");
-    }
-  }
-};
+<script setup>
+import { ref } from 'vue'
+import '../styles/Button.scss'
 </script>
 
-<style scoped>
-@import './assets/styles/yourstyles.css';
-</style>
+<template>
+        <div class="button-container-1">
+            <span class="mas">Apply!</span>
+            <button type="button" name="Hover">Apply!</button>
+        </div> 
+</template>
+

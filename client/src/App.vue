@@ -1,6 +1,8 @@
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
 import TheWelcome from './components/TheWelcome.vue'
+import Button from './common/Button.vue'
+import LoadingIndicator from './common/LoadingIndicator.vue'
 </script>
 
 <template>
@@ -13,9 +15,10 @@ import TheWelcome from './components/TheWelcome.vue'
   </header>
 
   <main>
-  <div className={styles.buttonContainer}>
-                <Button/>
-              </div>
+  <div>
+<LoadingIndicator>
+</LoadingIndicator>
+</div>
   </main>
 </template>
 
@@ -23,7 +26,6 @@ import TheWelcome from './components/TheWelcome.vue'
 header {
   line-height: 1.5;
 }
-
 .logo {
   display: block;
   margin: 0 auto 2rem;
