@@ -6,7 +6,7 @@ const handleImageError = () => {
 };
 </script>
 
-<template>
+<template> 
   <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
     <img :src= "Load" alt="Loading..." @error="handleImageError" />
   </div>
