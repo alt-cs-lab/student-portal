@@ -17,12 +17,15 @@ Welcome to the Professional Applications System, a capstone project developed by
 
 **Running the Project** 
 1. Client Side
-    * Install Client packages: ```cd client/app && npm install```
+    * Install Client packages: ```cd client && npm install```
     * Starting Client: ```npm start``` 
 2. Server Side
     * Install Server packages: ```cd server && npm install```
     * Update [.env](server/.env) file
-    * Start the Server: ```node server.js```
+    * Start the Server: ```npm start```
+3. Database
+    * Install Knex: ```npm install knex -g```
+    * Run Database: ```cd sever && knex migrate:up --knexfile configs/db.js```
 
 ## Description
  This applicaiton will keep track of an individual student’s pre-professional and professional program GPA and the status of the student’s professional program application. It will have information about the student’s advisor, how far along they are in their degree program, and allow the student to fill out the professional program application automatically. After project completion, it will be maintained by CIS faculty and staff. 
