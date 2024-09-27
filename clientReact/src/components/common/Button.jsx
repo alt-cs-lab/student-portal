@@ -1,4 +1,4 @@
-import React from 'react';
+const name = ref('Vue.js')
 import '../../styles/Button.scss';
 
 const ApplyButton= () => {
@@ -6,9 +6,10 @@ const ApplyButton= () => {
         <div class="button-container-1">
             <span class="mas">Apply!</span>
             <button type="button" name="Hover">Apply!</button>
+            Apply!
         </div> 
-    );
-};
+    )
+}
  
 export {ApplyButton};
 
