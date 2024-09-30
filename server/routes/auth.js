@@ -75,14 +75,15 @@ router.get('/ticket', async (req, res) => {
       const eid = json['cas:serviceResponse']['cas:authenticationSuccess']['cas:user'];
       const wid = json['cas:serviceResponse']['cas:authenticationSuccess']['cas:ksuPersonWildcatID'];
       const email = `${eid}@ksu.edu`;
+      const admin = (eid === 'admin') ? true : false
 
       // We need to retrieve the user record, or insert it if it does not exist yet
       
       // Try inserting the user, in case they don't exist in the db yet
       // we use onConflict to merge updated information instead.
       await knex('users')
-        .insert({eid, wid, email})
-        .onConflict('eid', 'wid', 'email')
+        .insert({eid, wid, email, admin})
+        .onConflict('eid', 'wid', 'email', 'admin')
         .merge()
       const user = await knex('users')
         .first()
