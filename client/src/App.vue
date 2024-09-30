@@ -3,6 +3,8 @@ import HelloWorld from './components/HelloWorld.vue'
 import TheWelcome from './components/TheWelcome.vue'
 import Button from './common/Button.vue'
 import LoadingIndicator from './common/LoadingIndicator.vue'
+import ErrorPage from './common/ErrorPage.vue'
+import ProtectedAdminRoute from './common/ProtectedAdminRoute.vue'
 </script>
 
 <template>
@@ -16,8 +18,8 @@ import LoadingIndicator from './common/LoadingIndicator.vue'
 
   <main>
   <div>
-<LoadingIndicator>
-</LoadingIndicator>
+
+<ProtectedAdminRoute />
 </div>
   </main>
 </template>

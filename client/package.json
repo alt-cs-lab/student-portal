@@ -9,13 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.4.29",
     "devextreme": "24.1.4",
-    "devextreme-vue": "24.1.4"
+    "devextreme-vue": "24.1.4",
+    "vue": "^3.4.29",
+    "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
-    "vite": "^5.3.1",
-    "devextreme-themebuilder": "24.1.4"
+    "devextreme-themebuilder": "24.1.4",
+    "vite": "^5.3.1"
   }
 }
