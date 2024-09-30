@@ -2,9 +2,9 @@
 import HelloWorld from './components/HelloWorld.vue'
 import TheWelcome from './components/TheWelcome.vue'
 import Button from './common/Button.vue'
-import LoadingIndicator from './common/LoadingIndicator.vue'
-import ErrorPage from './common/ErrorPage.vue'
-import ProtectedAdminRoute from './common/ProtectedAdminRoute.vue'
+import LoadingIndicator from '../../vue-client/src/components/common/LoadingIndicator.vue'
+import ErrorPage from '../../vue-client/src/components/common/ErrorPage.vue'
+import ProtectedAdminRoute from '../../vue-client/src/components/common/ProtectedAdminRoute.vue'
 </script>
 
 <template>

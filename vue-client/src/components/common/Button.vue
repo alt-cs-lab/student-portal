@@ -10,7 +10,3 @@ import "../../styles/Button.scss";
       </button>
     </div>
 </template>
-
-<style lang="scss">
-@import "../../styles/Button.scss";
-</style>
