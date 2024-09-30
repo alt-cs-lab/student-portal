@@ -1,14 +1,16 @@
-import "../styles/Button.scss";
+<script>
+import "../../styles/Button.scss";
+</script>
 
-const ApplyButton = () => {
-  return (
+<template>
     <div class="button-container-1">
       <span class="mas">Apply!</span>
       <button type="button" name="Hover">
         Apply!
       </button>
     </div>
-  )
-}
+</template>
 
-export default {ApplyButton};
+<style lang="scss">
+@import "../../styles/Button.scss";
+</style>
