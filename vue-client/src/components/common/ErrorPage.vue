@@ -1,7 +1,7 @@
 <script setup>
     import { ref } from 'vue'
     import { useRouter } from 'vue-router';
-    import '../styles/ErrorPage.css'
+    import '../../styles/ErrorPage.css'
     const router = useRoute();
     const message = route.params.message || 'A Happy Little Accident (The page you are viewing does not exist 😞)';
 </script>

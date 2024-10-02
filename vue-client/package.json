@@ -11,10 +11,11 @@
   "dependencies": {
     "vue": "^3.4.29",
     "vuetify": "^3.7.2"
+    "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
     "sass-embedded": "^1.79.4",
-    "vite": "^5.3.1"
+    "vite": "^5.4.8"
   }
 }
