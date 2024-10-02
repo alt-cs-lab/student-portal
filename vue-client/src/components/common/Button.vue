@@ -1,5 +1,6 @@
 <script>
 import "../../styles/Button.scss";
+
 </script>
 
 <template>
@@ -10,3 +11,4 @@ import "../../styles/Button.scss";
       </button>
     </div>
 </template>
+
