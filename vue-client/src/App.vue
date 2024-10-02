@@ -1,6 +1,6 @@
 <script setup>
 import { RouterView } from 'vue-router';
-
+import Footer from './components/layout/Footer.vue'
 import ProtectedAdminRoute from './components/common/ProtectedAdminRoute.vue';
 import ErrorPage from './components/common/ErrorPage.vue';
 import './App.css';
@@ -19,7 +19,7 @@ import './App.css';
     <RouterLink to="/admin">Go to Admin</RouterLink>
   </nav>
           </div> 
-         <!-- <Footer/> -->
+          <Footer/>
         </div>
     </UserProvider> 
 </template>

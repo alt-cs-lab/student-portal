@@ -8,14 +8,14 @@ import {RouterView} from 'vue-router';
 
 <template>
     <div className={styles.HomePage}>
-      <Container>
+      <VContainer>
         <div className={styles.appHeader}>
           <h1 className={styles.h1Style}>CS Applications</h1>
           <h4 className={styles.h4Style}>Welcome to the CS Applications System</h4>
         </div>
-      </Container>
+      </VContainer>
 
-      <Container>
+      <VContainer>
         <VRow className="gx-2">
           <VCol md={5} className={styles.boxStyle} style={{ backgroundColor: #d1d1d1}}> {/* Bootstrap's is made up of Grid which contains Row and Col, each row have 12 cols,
                                   md={6} means screen size >=768px will have Requirements and Apply side by side
@@ -40,7 +40,7 @@ import {RouterView} from 'vue-router';
             </RouterLink>
           </VCol>
         </VRow>
-      </Container>
+      </VContainer>
     </div>
 </template>
 

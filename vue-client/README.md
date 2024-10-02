@@ -1,6 +1,7 @@
 # for-us
-install vuetify
-install vue-router
+npm install vuetify
+npm install vue-router
+npm install
 
 # vue-client
 
