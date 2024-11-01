@@ -1,7 +1,23 @@
 <template>
   <div> 
     <!-- Dialogs go here -->
-    
+    <Dialog v-model:visible="AdminNotes" modal header="Edit Notes" :style="{ width: '25rem' }">
+    <div class="flex items-center gap-4 ">
+        <label for="username" class="font-semibold w-24">Username: {{ NotesUsername }}</label>
+        <InputText id="username" v-model="NotesUsername.value" class="flex-auto" autocomplete="off" />
+    </div>
+    <div class="flex items-center gap-4 mb-8">
+      <FloatLabel varient= "in">
+          <Textarea>
+
+          </Textarea> 
+        </FloatLabel>
+    </div>
+    <div class="flex justify-end gap-2">
+        <Button type="button" label="Cancel" severity="secondary" @click="AdminNotes = false"></Button>
+        <Button type="button" label="Save" @click="HandleSaveNotesClick, AdminNotes = false"></Button>
+    </div>
+</Dialog>
     <LoadingIndicator v-if="isLoading" />
 
     <div class="grid" v-else>
@@ -59,7 +75,7 @@
                 <Column field="review" header="Review" />
                 <Column header="Admin Notes">
                     <template #body="slotProps">
-                        <Button label="View Notes" @click="handleAdminNoteClick(slotProps.data)" />
+                      <Button label="View Notes" @click="() => handleAdminNoteClick(slotProps.firstName)" />
                     </template>
                 </Column>
                 <Column field="dars" header="DARS Update" />
@@ -98,6 +114,7 @@ export default {
     Dialog,
     DataTable,
     Column,
+    FloatLabel,
   },
   data() {
     return {
@@ -106,11 +123,20 @@ export default {
       shared,
       isLoading: ref(false),
       applications: ref(applicationData),
+      AdminNotes: ref(false),
+      NotesUsername: ref(""),
+      
     };
   },
   methods: {
     resetSortConfig(event){
 
+    },
+    HandleSaveNotesClick(event){
+    },
+    handleAdminNoteClick(username){
+      this.NotesUsername.value = username;
+      this.AdminNotes.value = true;
     },
     fetchCourses(wid) { 
       if (!WID){
