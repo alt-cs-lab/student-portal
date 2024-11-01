@@ -1,9 +1,9 @@
 <template>
-  <header :class="styles.headerContainer">
+  <header :class="styles['headerContainer']">
     <div :class="styles.headerTop" style="background-color: gainsboro; display: grid; justify-content: end; grid-auto-flow: column; padding-top: .1rem;">
       <p style="padding-right: 1rem;">Admin Mode:</p>
         <ToggleSwitch v-model="adminMode" style="margin-right:5vw" />
-        <RouterLink :to="''" @click="logout" :class="styles.logout">Logout</RouterLink>
+        <RouterLink :to="''" @click="logout" :class="styles['logout']">Logout</RouterLink>
     </div>
     <div :class="styles.headerTop">
       <a href="https://ksu.edu" :class="styles.noBackground">
@@ -57,12 +57,13 @@ export default defineComponent({
   components: {
     ToggleSwitch,
   },
-  setup() {
-    const logout = () => {
+  methods: {
+    logout(event) {
       const tokenStore = useTokenStore();
       tokenStore.logout();
-    };
-
+    }
+  },
+  setup() {
     const store = useStore(); // Get the store instance
     const adminMode = ref(store.state.IsAdminMode);
     const popupTop = ref(0);

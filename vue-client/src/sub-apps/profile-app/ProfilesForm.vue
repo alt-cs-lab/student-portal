@@ -65,7 +65,7 @@
                 <div class="col-12" style="margin-top: 20px;">
                   <div style="background-color: gray; border: 3px solid #757575; border-radius: 10px;" class="col border-round-sm">
                     <div class="col-12 sml">
-                      <img :src="githubText" alt="github text" style="text-align: center; margin: 15px;  max-width: 70%; max-height: 50%;" />
+                      <img :src="githubText" alt="github text" style=" text-align: center; width: 150px; height: 50px; margin-left: auto; margin-right: auto; display: block;" />
                       <h4 :class="styles['text']" style="text-align: center; color:white">Click the button below to link your GitHub account.</h4>
                     </div>
                     <div class="col flex align-items-center justify-content-center">
