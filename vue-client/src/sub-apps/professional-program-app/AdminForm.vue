@@ -2,22 +2,27 @@
   <div> 
     <!-- Dialogs go here -->
     <Dialog v-model:visible="AdminNotes" modal header="Edit Notes" :style="{ width: '25rem' }">
-    <div class="flex items-center gap-4 ">
-        <label for="username" class="font-semibold w-24">Username: {{ NotesUsername }}</label>
-        <InputText id="username" v-model="NotesUsername.value" class="flex-auto" autocomplete="off" />
-    </div>
-    <div class="flex items-center gap-4 mb-8">
-      <FloatLabel varient= "in">
-          <Textarea>
-
-          </Textarea> 
-        </FloatLabel>
-    </div>
-    <div class="flex justify-end gap-2">
-        <Button type="button" label="Cancel" severity="secondary" @click="AdminNotes = false"></Button>
-        <Button type="button" label="Save" @click="HandleSaveNotesClick, AdminNotes = false"></Button>
-    </div>
+  <div class="flex items-center gap-4">
+    <label for="username" class="font-semibold w-24">Name: {{ NotesName }}</label>
+  </div>
+  <br>
+  <div class="flex items-center gap-4 mb-8">
+    <FloatLabel variant="in">
+      <Textarea 
+        rows="10" 
+        cols="75"
+        autoResize
+        style="width:100%">
+      {{ studentNotes }}
+      </Textarea>
+    </FloatLabel>
+  </div>
+  <div class="flex justify-end gap-2">
+    <Button type="button" label="Cancel" severity="secondary" @click="AdminNotes = false"></Button>
+    <Button type="button" label="Save" @click="HandleSaveNotesClick; AdminNotes = false"></Button>
+  </div>
 </Dialog>
+
     <LoadingIndicator v-if="isLoading" />
 
     <div class="grid" v-else>
@@ -74,9 +79,9 @@
                 <Column field="status" header="Status" />
                 <Column field="review" header="Review" />
                 <Column header="Admin Notes">
-                    <template #body="slotProps">
-                      <Button label="View Notes" @click="() => handleAdminNoteClick(slotProps.firstName)" />
-                    </template>
+                  <template #body="slotProps">
+                    <Button label="View Notes" @click="handleAdminNoteClick(slotProps.data.firstName, slotProps.data.lastName)" />
+                  </template>
                 </Column>
                 <Column field="dars" header="DARS Update" />
                 <Column field="edit" header="Edit" />
@@ -121,10 +126,11 @@ export default {
       // Define all reactive data properties here
       styles,
       shared,
-      isLoading: ref(false),
-      applications: ref(applicationData),
-      AdminNotes: ref(false),
-      NotesUsername: ref(""),
+      isLoading: false,
+      applications: applicationData,
+      AdminNotes: false,
+      NotesName: "",
+      studentNotes: "",
       
     };
   },
@@ -133,10 +139,12 @@ export default {
 
     },
     HandleSaveNotesClick(event){
+      //take the studentNotes and save it wherever it needs to go
     },
-    handleAdminNoteClick(username){
-      this.NotesUsername.value = username;
-      this.AdminNotes.value = true;
+    handleAdminNoteClick(firstName, lastName ){
+      this.NotesName = firstName + " " + lastName;
+      this.studentNotes = "testing purposes here"; //get students nots and put them here
+      this.AdminNotes = true;
     },
     fetchCourses(wid) { 
       if (!WID){
