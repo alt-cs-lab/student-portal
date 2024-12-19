@@ -1,10 +1,20 @@
 //TODO: Update all http to https address, local env was not set up correctly. 
 const express = require('express');
-const session = require('express-session');
 const cors = require('cors');
+const logger = require('./configs/logger.js');
+const util = require('node:util');
+const createError = require('http-errors');
+const cookieParser = require('cookie-parser');
+const session = require('./configs/session.js');
 const serverConfig = require('./configs/server');
-const knexConfig = require('./configs/db');
-const knex = require('knex')(knexConfig);
+const knex = require('./configs/db');
+const discord = require('./models/discord.js');
+const passport = require('passport');
+const crypto = require('crypto')
+
+
+//runs the discord bot
+//discord.runDiscordBot();
 
 const app = express();
 const PORT = serverConfig.port || 3001;
@@ -15,59 +25,58 @@ app.disable('etag');
 
 app.use(express.json());
 
-app.use(session({
-  // We want a unique session secret for the application, 
-  // ideally stored as an environment variable.
-  secret: process.env.SESSION_SECRET || 'keyboard cat',
-  // resave forces the session to be written back to the 
-  // session store when no changes have been made
-  resave: false,
-  // saveUninitialized allows new and unmodified sessions
-  // to be saved to the session store.  Since we're using 
-  // the username to determine login status, `true` is fine.
-  saveUninitialized: true,
-  // Cookie-specific settings
-  cookie: { 
-    // secure requires the client to be using https
-    secure: false
-  }
-}));
+app.use(session);
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Middleware
 const corsConfig = require('./middleware/corsConfig');
 app.use(corsConfig);
+console.log()
+// Cookie Parsing
+const app_secret = crypto.randomBytes(16).toString('hex')
+app.use(cookieParser(app_secret));
 
 // Routes
-const userRoutes = require('./routes/userRoutes');
+const apiRoutes = require('./routes/api.js');
 const courseRoutes = require('./routes/courseRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const dataRoutes = require('./routes/dataRoutes');
 const authRoutes = require('./routes/auth'); // Renamed for clarity
 const adminRoutes = require('./routes/adminRoutes');
+const discordRoutes = require('./routes/discordRoutes');
+const githubRoutes = require('./routes/githubRoutes');
 
 // Use routes
-app.use('/api', userRoutes);
+app.use('/api/v1', (req, res, next) => {next()}, apiRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', applicationRoutes);
 app.use('/api', dataRoutes);
-app.use('/api', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/api', adminRoutes);
+app.use('/discord', discordRoutes);
+app.use('/github', githubRoutes);
 
-//const loginRequired = require('./middleware/login-required');
-// Serve info about the logged-in user.  Since only 
-// logged-in users should see this page, use the loginRequired
-// middleware to return a permission denied error if the user
-// is not authenticated.
+// Catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  logger.error('404: ' + req.url + ' : ' + req.originalUrl)
+  next(createError(404))
+})
 
-//TODO: Understand and implement 
-// app.get('/whoami', loginRequired, (req, res) => {
-//   // Serve the logged-in user's information.  This 
-//   // can be expanded to offer more information.
-//   res.json({
-//     username: req.session.username
-//   });
-// });
+// Error handler
+app.use(function (err, req, res, next) {
+  // set locals, only providing error in development
+  logger.error(util.inspect(err))
+  res.locals.message = err.message
+  res.locals.error = req.app.get('env') === 'development' ? err : {}
+
+  // render the error page
+  res.status(err.status || 500)
+  res.render('error')
+})
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = app

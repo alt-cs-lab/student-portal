@@ -1,0 +1,41 @@
+.app-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+    margin-bottom: 30px;
+  }
+
+  .h1-style {
+    background-color: #512888; 
+    color: #fff; 
+    width: 100%;
+    text-align: center;
+    margin: 0; 
+    line-height: 1.2; 
+    padding: 10px 0;  
+    border: 3px solid #757575;
+  }
+  
+  .h4-style {
+    background-color: #d1d1d1; 
+    color: #512888;  
+    width: 100%;
+    text-align: center;
+    margin: 0; 
+    line-height: 1.2; 
+    padding: 10px 0;  
+    border: 3px solid #757575;
+    border-top: transparent;
+  }
+
+  .flex-centered{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .no-decoration {
+    text-decoration: none; 
+  }

@@ -1,5 +1,4 @@
 const express = require('express');
-const { route } = require('./applicationRoutes');
 const router = express.Router();
 
 router.get('/courses', async (req, res) => {  

@@ -1,0 +1,40 @@
+{
+  "name": "vue-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "NODE_ENV=test,SERVER_PORT=4050 vitest"
+  },
+  "dependencies": {
+    "@pinia/testing": "^0.1.7",
+    "@primevue/themes": "^4.1.1",
+    "@vueuse/core": "^11.1.0",
+    "axios": "^1.7.7",
+    "bootstrap-vue": "^2.23.1",
+    "he": "^1.2.0",
+    "js-logger": "^1.6.1",
+    "jwt-decode": "^4.0.0",
+    "node": "^18.20.5",
+    "papaparse": "^5.4.1",
+    "pinia": "^2.2.4",
+    "primeflex": "^3.3.1",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.1.1",
+    "vite-plugin-vue-devtools": "^7.5.4",
+    "vitest": "^2.1.4",
+    "vue": "^3.4.29",
+    "vue-router": "^4.4.5",
+    "vuetify": "^3.7.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.1",
+    "sass-embedded": "^1.79.4",
+    "vite": "^5.4.8"
+  }
+}

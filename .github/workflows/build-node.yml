@@ -1,47 +1,32 @@
-# Build Node Workflow
-#
-# Based on workflows here
-# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-# https://github.com/russfeld/officehours-node/blob/main/.github/workflows/build-node.yml
-
-# Copyright 2023 under MIT License
-
 name: Build Node
 
 run-name: ${{ github.actor }} is building/testing node
 
-
-# Runs on pushes and pulls from main
+# Trigger the workflow on pushes and pull requests to the main branch
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
-
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
-        # Check out repo
-        - uses: actions/checkout@v3
+      # Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-        # Setup node
-        - name: Use Node.js ${{ matrix.node-version }}
-          uses: actions/setup-node@v3
-          with:
-            node-version: ${{ matrix.node-version }}
-            cache: 'npm' # Cache NPM dependencies
+      # Set up the environment variable with the GitHub secret
+      - name: Set DISCORD_SECRET as environment variable
+        run: echo "DISCORD_SECRET=${{ secrets.DISCORD_SECRET }}" >> $GITHUB_ENV
 
-        # Install dependencies
-        - name: Install Dependencies
-          run: npm ci
+      # Optionally, you can use the secret later in another step
+      - name: Use DISCORD_SECRET
+        run: |
+          echo "The secret is set."
+          # You can access the DISCORD_SECRET here like this:
+          echo "Secret is $DISCORD_SECRET"

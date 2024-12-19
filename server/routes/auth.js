@@ -1,117 +1,224 @@
-// Nabbed from https://github.com/zombiepaladin/react-cas-example
-const process = require('process');
-const express = require('express');
-const axios = require('axios'); 
-const {XMLParser} = require('fast-xml-parser');
-const router = express.Router();
 
-// The serviceHost (our server) and casHost (the CAS server)
-// hostnames, we nee to build urls.  Since we pass our serviceHost
-// as a url component in the search string, we need to url-encode it. 
-var serviceHost = encodeURIComponent(process.env.API_URL + '/api/');
-var casHost = process.env.CAS_HOST; //'//'https://signin.k-state.edu/WebISO/';
- 
-// Retrieves the currently-signed in user
-router.get('/whoami', async (req, res) => {
-  const knex = req.app.get('knex')
-  console.log('whoami', req.session.user)
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: Authentication API
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   responses:
+ *     UnauthorizedError:
+ *       description: JWT is missing or invalid
+ */
 
-  // If we don't have a session, we're definitely not logged in
-  if(!(req.session && req.session.user)) return res.status(401).json('No user logged in')
+// Load Libraries
+const express = require('express')
+const router = express.Router()
+//const jwt = require('jsonwebtoken')
 
-  try {
-      const user = await knex('users')
-          .first('id', 'eid', 'email', 'first_name', 'last_name', 'admin')
-          .where({id: req.session.user.id})
-console.log({user});
-      if(!user) res.status(401).json('No user logged in')
-      else res.json(user);
-  } catch (err) {
-      console.error(err)
-      res.status(500, 'Server error')
-  }
-})
+// Load Configurations
+const cas = require('../configs/cas.js')
+const requestLogger = require('../middleware/request-logger.js')
+const refreshToken = require('../middleware/refreshToken.js')
 
-// Process incoming login request by sending the user to the CAS server
-router.get('/login', (req, res) => {
-  const returnUrl = req.query.returnUrl || '/';
-  console.log("User is logging in!");
-  req.session.returnUrl = returnUrl;
-  console.log("SessionID: " + req.sessionID);
-  res.redirect(`${casHost}login?service=${serviceHost}ticket`)
-});
+// Load Models
+const User = require('../models/user.js')
 
-// Process incoming logout request 
-router.get('/logout', (req, res) => {
-  // Destroy the session with this app
-  req.session.destroy();
-  // Also redirect to CAS server logout to end its session
-  res.redirect(`${casHost}logout`);
-})
+// Configure Logging
+router.use(requestLogger)
 
-// Validate redirected login requests coming from the CAS server
-router.get('/ticket', async (req, res) => {
-  const knex = req.app.get('knex')
-  // get the ticket from the querystring
-  const ticket = req.query.ticket;
-  // We need to verify this ticket with the CAS server,
-  // by making a request against its serviceValidate url
-  var url = `${casHost}serviceValidate?ticket=${ticket}&service=${serviceHost}ticket`;
-  // We'll use the fetch api to talk to the CAS server.  This can throw errors, so
-  // we'll wrap it in a try-catch
-  try {
-    // We'll make an asynchronous request, so we await the response
-    const response = await axios.get(url);
-    
-    // The response is in XML, so we'll parse it for easier access
-    const parser = new XMLParser();
-    const json = parser.parse(response.data);
-
-    // If the response contains a cas:authenticationSuccess node, 
-    // we know login was successful
-    if(json['cas:serviceResponse']['cas:authenticationSuccess']) {
-    
-      // We'll extract the eid and wid from the response, and generate the email
-      const eid = json['cas:serviceResponse']['cas:authenticationSuccess']['cas:user'];
-      const wid = json['cas:serviceResponse']['cas:authenticationSuccess']['cas:ksuPersonWildcatID'];
-      const email = `${eid}@ksu.edu`;
-
-      // We need to retrieve the user record, or insert it if it does not exist yet
-      
-      // Try inserting the user, in case they don't exist in the db yet
-      // we use onConflict to merge updated information instead.
-      await knex('users')
-        .insert({eid, wid, email})
-        .onConflict('eid', 'wid', 'email')
-        .merge()
-      const user = await knex('users')
-        .first()
-        .where({wid})
-        //.whereRaw('lower(eid) = ?', [req.session.username.toLowerCase()])
-        
-      if (user) {
-        req.session.user = {
-            id: user.id,
-            eid: user.eid, 
-            wid: user.wid,           
-            role: user.admin ? 'admin' : 'user'  // Set role based on the admin column
-        };
-        // Redirect back to the requested page
-        res.redirect(req.session.returnUrl || '/');
-      } else {
-        // Handle error if user is not found
-        res.status(404).send("User not found");
-      } 
+/**
+ * @swagger
+ * /auth/login:
+ *   get:
+ *     summary: login
+ *     description: log in the current user by redirecting to CAS or using force authentication if enabled
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       301:
+ *         description: user is logged in, redirect to homepage
+ */
+router.get('/login', refreshToken, async function (req, res, next) {
+  if (!req.session.user_id) {
+    let email = ''
+    if (req.query.email && process.env.FORCE_AUTH === 'true') {
+      // force authentication enabled, use email from query
+      email = req.query.email
     } else {
-      res.status(403).send("Authentication failed");
+      // use CAS authentication
+      if (req.session[cas.session_name] === undefined) {
+        // CAS is not authenticated, so redirect
+        // Hack to fix redirects
+        req.url = req.originalUrl
+        cas.bounce_redirect(req, res, next)
+        return
+      } else {
+        // CAS is authenticated, get email from session
+        email =
+          req.session[cas.session_name] + '@ksu.edu'
+      }
     }
-
-  } catch (err) {
-    // If we caught an error, log it to the console
-    console.error(err);
-    // and send a 500 status code 
-    res.status(500).send('Sorry. Something went wrong.')
+    if (email && email.length != 0) {
+      // Find or Create User for email
+      let user = await User.findOrCreate(email)
+      // Store User ID in session
+      // req.session.user_id = user.id
+      // req.session.user_email = email
+      // https://medium.com/garage-inside-garage/secure-jwt-authentication-against-both-xss-and-xsrf-vue-js-django-rest-b1570b8acf70
+      // Set Refresh Token as HTTP Only Cookie
+      const refreshToken = await user.updateRefreshToken()
+      res.cookie('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 5 * 60 * 60 * 1000, // 5 hours
+      })
+    }
   }
-});
+  // Redirect to Homepage
+  res.redirect('/')
+})
 
-module.exports = router;
+
+/**
+ * @swagger
+ * /auth/token:
+ *   get:
+ *     summary: get JWT
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: JWT for user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               token:
+ *                 type: string
+ *                 format: JWT
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.get('/token', refreshToken, async function (req, res, next) {
+  // TODO use refresh session cookie
+  if (req.session.user_id) {
+    const token = await User.getToken(req.session.user_id)
+    if (token) {
+      res.json({
+        token: token,
+      })
+      return
+    } else {
+      res.status(401)
+      res.json({ error: 'User does not have role to request API token' })
+    }
+  } else {
+    res.status(401)
+    res.json({ error: 'No Session Established, Please Login' })
+  }
+})
+
+/**
+ * @swagger
+ * /auth/token:
+ *   post:
+ *     summary: use refresh token to get new JWT
+ *     tags: [Auth]
+ *     requestBody:
+ *       description: refresh token
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refresh_token:
+ *                 type: string
+ *                 format: JWT
+ *     responses:
+ *       200:
+ *         description: JWT for user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               token:
+ *                 type: string
+ *                 format: JWT
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+// router.post('/token', async function (req, res, next) {
+//   if (req.body.refresh_token) {
+//     jwt.verify(
+//       req.body.refresh_token,
+//       process.env.TOKEN_SECRET,
+//       async (err, data) => {
+//         // console.log('Debugging old refresh tokens')
+//         // console.log(err)
+//         // console.log(data)
+//         if (err) {
+//           res.status(401)
+//           res.json({ error: 'Error Parsing Token' })
+//           return
+//         }
+//         if (data && data.refresh_token) {
+//           // If we receive a verified token, see if it is valid in the database
+//           const user = await User.findByRefreshToken(data.refresh_token)
+//           if (user != null) {
+//             // If it is valid, generate a new token and send
+//             const token = await User.getToken(user.id)
+//             res.json({
+//               token: token,
+//             })
+//           } else {
+//             res.status(401)
+//             res.json({
+//               error:
+//                 'Refresh Token Not Found in Database, Session Expired, Please Login',
+//             })
+//           }
+//         } else {
+//           res.status(401)
+//           res.json({ error: 'Token Data Invalid, Please Login' })
+//         }
+//       }
+//     )
+//   } else {
+//     res.status(401)
+//     res.json({ error: 'Refresh Token Not Found in Request Body' })
+//   }
+// })
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   get:
+ *     summary: logout
+ *     description: log out the current user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       301:
+ *         description: user is logged out, redirect to home page
+ */
+router.get('/logout', refreshToken, async function (req, res, next) {
+  if (req.session.user_id) {
+    await User.clearRefreshToken(req.session.user_id)
+  }
+  if (req.session[cas.session_name]) {
+    cas.logout(req, res, next)
+  } else {
+    req.session.destroy()
+    res.redirect('/')
+  }
+})
+
+module.exports = router

@@ -7,14 +7,29 @@ exports.up = function(knex) {
   return knex.schema
     .createTable('users', function(table) {
       table.increments('id')
-      table.integer('wid', 20).unique().notNullable()
+      table.integer('wid', 9).unique().notNullable()
       table.string('eid', 20).unique().notNullable()
       table.string('first_name')
       table.string('last_name')
       table.string('email').unique().notNullable()
-      table.boolean('admin').defaultTo(false)
+      table.string('refresh_token', 255)
+      table.boolean('is_admin').defaultTo(false)
       table.boolean('advisor').defaultTo(false)
       table.boolean('warning').defaultTo(false)
+      table.boolean('profile_updated').defaultTo(false)
+      table.string('updated_at', 255)
+      table.string('updated_by', 255)
+    })
+    .createTable('user_discord', function(table) {
+      table.integer('user_id').unsigned().references('id').inTable('users').onDelete('CASCADE').primary()
+      table.string('discord_id').notNullable();
+      table.string('username', 255).notNullable();
+    })
+    .createTable('user_github', function(table) {
+      table.integer('user_id').unsigned().references('id').inTable('users').onDelete('CASCADE').primary()
+      table.string('github_id').notNullable();
+      table.string('username', 255).notNullable();
+      table.string('profile_url', 255).notNullable();
     })
     .createTable('programs', function(table) {
       table.increments('id')

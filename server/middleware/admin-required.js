@@ -1,10 +1,11 @@
-
-function isAdmin(req, res, next) {
-    if (req.session.user && req.session.user.role === 'admin') {
-      next(); 
-    } else {
-      res.status(403).json({ message: 'Access denied. Admins only.' });
-    }
+/* Check if User is Admin */
+async function adminOnly(req, res, next) {
+  if (req.is_admin) {
+    next()
+  } else {
+    res.status(403)
+    res.json({ error: 'Admins Only' })
   }
-  
-module.exports = isAdmin;
+}
+
+module.exports = adminOnly

@@ -1,7 +1,9 @@
 const express = require('express');
+const adminOnly = require('../middleware/admin-required');
 const router = express.Router();
 
-router.get('/GETEVERYTHING', async (req, res) => {
+//Honestly not sure what this is, I assume it's a testing/debug route
+router.get('/GETEVERYTHING', adminOnly, async (req, res) => {
     const knex = req.app.get('knex')
     try {
         const data = await knex.select('*').from('dars_data');
