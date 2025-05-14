@@ -8,13 +8,10 @@ const cookieParser = require('cookie-parser');
 const session = require('./configs/session.js');
 const serverConfig = require('./configs/server');
 const knex = require('./configs/db');
-const discord = require('./models/discord.js');
 const passport = require('passport');
 const crypto = require('crypto')
 
-
-//runs the discord bot
-//discord.runDiscordBot();
+const discord = require('./discordBot/discordbot.js');
 
 const app = express();
 const PORT = serverConfig.port || 3001;
@@ -32,30 +29,15 @@ app.use(passport.session());
 // Middleware
 const corsConfig = require('./middleware/corsConfig');
 app.use(corsConfig);
-console.log()
+
 // Cookie Parsing
 const app_secret = crypto.randomBytes(16).toString('hex')
 app.use(cookieParser(app_secret));
 
 // Routes
 const apiRoutes = require('./routes/api.js');
-const courseRoutes = require('./routes/courseRoutes');
-const applicationRoutes = require('./routes/applicationRoutes');
-const dataRoutes = require('./routes/dataRoutes');
-const authRoutes = require('./routes/auth'); // Renamed for clarity
-const adminRoutes = require('./routes/adminRoutes');
-const discordRoutes = require('./routes/discordRoutes');
-const githubRoutes = require('./routes/githubRoutes');
 
-// Use routes
-app.use('/api/v1', (req, res, next) => {next()}, apiRoutes);
-app.use('/api', courseRoutes);
-app.use('/api', applicationRoutes);
-app.use('/api', dataRoutes);
-app.use('/auth', authRoutes);
-app.use('/api', adminRoutes);
-app.use('/discord', discordRoutes);
-app.use('/github', githubRoutes);
+app.use('/api/v1', apiRoutes);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {

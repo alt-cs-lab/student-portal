@@ -2,7 +2,8 @@
  * @swagger
  * tags:
  *   name: Profile
- *   description: Profile API
+ *   description: API to get info about the currently logged in user. User-level
+ *   base-file-route: api/v1/protected/profile/
  */
 
 // Load Libraries
@@ -12,7 +13,6 @@ const router = express.Router()
 // Load Models
 const User = require('../models/user.js')
 
-//API routes for getting information about the currently logged in user, available to all.
 /**
  * @swagger
  * /api/v1/profile:

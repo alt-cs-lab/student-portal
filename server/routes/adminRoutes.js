@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-//const isAdmin = require('../middleware/admin-required');
-//router.use(isAdmin);
 
+const User = require('../models/user.js')
 
-
+// Unused but needs to be finished
 router.post('/disableApplications', async (req, res) => {
     const knex = req.app.get('knex')
     const { ids } = req.body; // Expect an array of IDs
@@ -28,7 +27,7 @@ router.post('/disableApplications', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
-
+// Unused but needs to be finished
 router.post('/sendEmail', async (req, res) => {
     const knex = req.app.get('knex')
     const { ids } = req.body; // Expect an array of IDs
@@ -56,7 +55,7 @@ router.post('/sendEmail', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
-
+// Unused but needs to be finished
 const updateApplicationNotes = async (appId, notes) => {
     const knex = req.app.get('knex')
     const now = new Date();
@@ -68,7 +67,7 @@ const updateApplicationNotes = async (appId, notes) => {
         .where('wid', appId) // Use `where`, not `whereIn` for a single ID
         .update({ notes: updatedNotes, d_update: formattedDateForDB });
 };
-
+// Unused but needs to be finished
 router.post('/saveNotes', async (req, res) => {
     const knex = req.app.get('knex')
     const appId = req.query.appId; // Correctly access the appId from the query parameters
@@ -83,7 +82,7 @@ router.post('/saveNotes', async (req, res) => {
         res.status(500).json({ message: `Failed to update notes for wid: ${appId}.` });
     }
 });
-
+// Unused but needs to be finished
 router.post('/updateApplication', async (req, res) => {
     const knex = req.app.get('knex')
     const appId = req.query.appId; 
@@ -107,5 +106,53 @@ router.post('/updateApplication', async (req, res) => {
         res.status(500).json({ message: `Failed to update application for wid: ${appId}.` });
     }
 });
+// Gets all users from the database
+router.get('/allUsers', async (req, res) => {
+    try{
+        const result = await User.queryAllUsers();
+        res.json(result);
+
+    }catch(error){
+        console.log(error);
+    }
+
+});
+// Updates the users roles like admin, review, user. 
+router.post('/updateUser', async (req, res) => {
+    try{
+        const {user_id, roles} = req.body;
+        await User.updateUserRoles(user_id, roles);
+        res.status(200).json({ message: 'User roles updated successfully' });
+    }catch(error){
+        console.log(error);
+    }
+
+});
+// Used to import the student report
+router.post('/importStudentReport', async (req, res) => {
+    const enrollmentLines = req.body.parsed.data
+    try {
+        enrollmentLines.forEach(async element => {
+            await User.importStudent(element)
+        });
+        res.status(200).json({message: 'Student information successfully imported'})
+    } catch (err) {
+        res.status(500).json({message: 'Student information import failed'})
+    }
+})
+// Used to immport the enrollment report
+router.post('/importEnrollmentReport', async (req, res) => {
+    const enrollmentLines = req.body.parsed.data
+    try {
+        enrollmentLines.forEach(async element => {
+            await User.addEnrollment(element)
+        });
+        res.status(200).json({message: 'Enrollment information successfully imported'})
+    } catch (err) {
+        res.status(500).json({message: 'Enrollment information import failed'})
+    }
+    
+})
 
 module.exports = router;
+

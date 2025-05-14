@@ -6,9 +6,9 @@ import 'dotenv/config'
 const shouldAllowLogin = (user) => {
   it('should allow ' + user.eid + ' to log in and get token', (done) => {
     const agent = request.agent(server)
-    agent.get('/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
+    agent.get('/api/v1/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
       agent
-        .get('/auth/token')
+        .get('/api/v1/auth/token')
         .expect(200)
         .end((err, res) => {
           if (err) return done(err)
@@ -29,7 +29,7 @@ const loginShouldRedirectToHomepage = (user) => {
   it('should redirect ' + user.eid + ' to homepage', (done) => {
     const agent = request.agent(server)
     agent
-      .get('/auth/login?eid=' + encodeURIComponent(user.eid))
+      .get('/api/v1/auth/login?eid=' + encodeURIComponent(user.eid))
       .expect(302)
       .expect('Location', '/')
       .end((err) => {
@@ -42,9 +42,9 @@ const loginShouldRedirectToHomepage = (user) => {
 const tokenShouldIncludeUserData = (user) => {
   it('should include user info in token', (done) => {
     const agent = request.agent(server)
-    agent.get('/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
+    agent.get('/api/v1/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
       agent
-        .get('/auth/token')
+        .get('/api/v1/auth/token')
         .expect(200)
         .end((err, res) => {
           if (err) return done(err)
@@ -62,9 +62,9 @@ const tokenShouldIncludeUserData = (user) => {
 const tokenShouldBeValid = (user) => {
   it('should have a valid token signature', (done) => {
     const agent = request.agent(server)
-    agent.get('/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
+    agent.get('/api/v1/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
       agent
-        .get('/auth/token')
+        .get('/api/v1/auth/token')
         .expect(200)
         .end((err, res) => {
           if (err) return done(err)
@@ -96,9 +96,9 @@ const tokenSchemaShouldBeValid = (user) => {
       additionalProperties: false,
     }
     const agent = request.agent(server)
-    agent.get('/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
+    agent.get('/api/v1/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
       agent
-        .get('/auth/token')
+        .get('/api/v1/auth/token')
         .expect(200)
         .end((err, res) => {
           if (err) return done(err)
@@ -114,9 +114,9 @@ const tokenSchemaShouldBeValid = (user) => {
 const loginShouldFailOnNoEmail = (user) => {
   it('should fail on bad email', (done) => {
     const agent = request.agent(server)
-    agent.get('/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
+    agent.get('/api/v1/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
       agent
-        .get('/auth/token')
+        .get('/api/v1/auth/token')
         .expect(401)
         .end((err) => {
           if (err) return done(err)
@@ -130,7 +130,7 @@ const tokenShouldFailOnNoSession = () => {
   it('should not issue token without session', (done) => {
     const agent = request.agent(server)
     agent
-      .get('/auth/token')
+      .get('/api/v1/auth/token')
       .expect(401)
       .end((err) => {
         if (err) return done(err)
@@ -142,8 +142,8 @@ const tokenShouldFailOnNoSession = () => {
 const tokenShouldFailOnNoRole = (user) => {
   it('should not issue token without appropriate role', (done) => {
     const agent = request.agent(server)
-    agent.get('/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
-      agent.get('/auth/token').expect(401).end(done)
+    agent.get('/api/v1/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
+      agent.get('/api/v1/auth/token').expect(401).end(done)
     })
   })
 }
@@ -151,20 +151,20 @@ const tokenShouldFailOnNoRole = (user) => {
 const logoutShouldClearSession = (user) => {
   it('should clear session on logout', (done) => {
     const agent = request.agent(server)
-    agent.get('/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
+    agent.get('/api/v1/auth/login?eid=' + encodeURIComponent(user.eid)).end(() => {
       agent
-        .get('/auth/token')
+        .get('/api/v1/auth/token')
         .expect(200)
         .end((err) => {
           if (err) return done(err)
           agent
-            .get('/auth/logout')
+            .get('/api/v1/auth/logout')
             .expect(302)
             .expect('Location', '/')
             .end((err) => {
               if (err) return done(err)
               agent
-                .get('/auth/token')
+                .get('/api/v1/auth/token')
                 .expect(401)
                 .end((err) => {
                   if (err) return done(err)

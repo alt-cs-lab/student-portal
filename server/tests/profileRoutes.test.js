@@ -6,7 +6,7 @@ import 'dotenv/config'
 const getProfile = (user) => {
   it('should return the current user', (done) => {
     request(server)
-      .get('/api/v1/profile/')
+      .get('/api/v1/protected/profile/')
       .set('Authorization', `Bearer ${user.token}`)
       .expect(200)
       .end((err, res) => {
@@ -31,7 +31,7 @@ const getProfileSchemaMatch = (user) => {
       additionalProperties: false,
     }
     request(server)
-      .get('/api/v1/profile/')
+      .get('/api/v1/protected/profile/')
       .set('Authorization', `Bearer ${user.token}`)
       .expect(200)
       .end((err, res) => {
@@ -47,7 +47,7 @@ const updateProfile = (user) => {
     const firstName = 'Updated'
     const lastName = 'Name'
     request(server)
-      .post('/api/v1/profile/')
+      .post('/api/v1/protected/profile/')
       .set('Authorization', `Bearer ${user.token}`)
       .send({
         user: {
@@ -59,7 +59,7 @@ const updateProfile = (user) => {
       .end((err) => {
         if (err) return done(err)
         request(server)
-          .get('/api/v1/profile/')
+          .get('/api/v1/protected/profile/')
           .set('Authorization', `Bearer ${user.token}`)
           .expect(200)
           .end((err, res) => {
@@ -77,7 +77,7 @@ const updateProfileShouldIgnoreAdditionalProperties = (user) => {
     const firstName = 'Updated'
     const lastName = 'Name'
     request(server)
-      .post('/api/v1/profile/')
+      .post('/api/v1/protected/profile/')
       .set('Authorization', `Bearer ${user.token}`)
       .send({
         user: {
@@ -90,7 +90,7 @@ const updateProfileShouldIgnoreAdditionalProperties = (user) => {
       .end((err) => {
         if (err) return done(err)
         request(server)
-          .get('/api/v1/profile/')
+          .get('/api/v1/protected/profile/')
           .set('Authorization', `Bearer ${user.token}`)
           .expect(200)
           .end((err, res) => {
@@ -110,7 +110,7 @@ const updateProfileCannotChangeEmail = (user) => {
     const lastName = 'Name'
     const email = 'updated-email@russfeld.me'
     request(server)
-      .post('/api/v1/profile/')
+      .post('/api/v1/protected/profile/')
       .set('Authorization', `Bearer ${user.token}`)
       .send({
         user: {
@@ -123,7 +123,7 @@ const updateProfileCannotChangeEmail = (user) => {
       .end((err) => {
         if (err) return done(err)
         request(server)
-          .get('/api/v1/profile/')
+          .get('/api/v1/protected/profile/')
           .set('Authorization', `Bearer ${user.token}`)
           .expect(200)
           .end((err, res) => {
@@ -137,7 +137,7 @@ const updateProfileCannotChangeEmail = (user) => {
   })
 }
 
-describe('/api/v1/profile', () => {
+describe('/api/v1/protected/profile', () => {
   describe('user: test-admin', () => {
     let user = {
       email: 'test-admin@russfeld.me',

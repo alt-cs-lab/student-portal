@@ -45,7 +45,7 @@ const apiShouldReturnUserData = (user) => {
     })
   }
   
-  describe('/api/v1/users', () => {
+  describe('/api/v1/protected/users', () => {
     describe('user: test-admin', () => {
     //Creates a mock user
     let adminUser = {

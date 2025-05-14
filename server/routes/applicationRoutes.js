@@ -1,33 +1,69 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Applications
+ *   description: API to move information around with the applications. Mix of user and admin level
+ *   base-file-route: api/v1/protected/applications/
+ */
+
 const express = require('express');
 const router = express.Router();
-const adminOnly = require('../middleware/admin-required.js')
+const reviewerOnly = require('../middleware/reviewerRequired.js')
+
+//Models
+const Application = require('../models/application.js');
+const ApplicationCourse = require('../models/applicationCourse')
+const User = require('../models/user.js');
+const Course = require('../models/course.js');
+
+/*
+ * API routes for handling professional program applications
+ * Base api route: "api/applications/" 
+ */
 
 //Route to get the list of applications
-router.get('/applications', adminOnly, async (req, res) => {
-  const knex = req.app.get('knex')
+router.get('/', reviewerOnly, async (req, res) => {
   try {
-    const applications = await knex('professional_program_applications')
-      .join('users', 'professional_program_applications.user_id', '=', 'users.id')
-      .select(
-        'professional_program_applications.id',
-        'professional_program_applications.user_id',
-        'users.advisor',
-        'professional_program_applications.semester',
-        'professional_program_applications.status',
-        'professional_program_applications.notes',
-        'professional_program_applications.waiver',
-        'professional_program_applications.created_by',
-        'professional_program_applications.updated_by',
-        'users.first_name',
-        'users.last_name',
-        'users.email',
-        'users.eid', 
-      );
+    const applications = await Application.getAllApplications();
     res.json(applications);
   } catch (err) {
     console.error('Error fetching applications:', err);
     res.status(500).send('Server error');
   }
 });
+
+router.get('/courses', reviewerOnly, async (req, res) => {
+  try {
+    let courses = await Course.getApplicationCourses(req.query.app_user_id)
+    res.json(courses)
+  } catch (err) {
+    console.error('Error retieving user application details:', err);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/self', async (req, res) => {
+    try {
+      let courses = await Course.getApplicationCourses(req.user_id)
+      let application = await Application.find(req.user_id);
+      res.json({ courses, application })
+    } catch (err) {
+      console.error('Error retieving user application details:', err);
+      res.status(500).send('Server error');
+    }
+})
+
+//Route for a user to submit their application
+router.post('/submit', async (req, res) => {
+  try {
+    Application.create(req.user_id, req.body.application);
+    ApplicationCourse.update(req.user_id, req.body.courses);
+    res.status(200).send('Application submitted successfully');
+  } catch (err) {
+    console.error('Error creating application:', err);
+    res.status(500).send('Server error');
+  }
+  
+})
 
 module.exports = router;

@@ -12,7 +12,7 @@ if (process.env.NODE_ENV === 'test') {
       directory: './migrations'
     },
     seeds: {
-      directory: './seeds'
+      directory: './database/seeds'
     },
   }
 } else {
@@ -30,7 +30,7 @@ if (process.env.NODE_ENV === 'test') {
       directory: '../migrations'
     },
     seeds: {
-      directory: '../seeds'
+      directory: '../database/seeds'
     },
   }
 }

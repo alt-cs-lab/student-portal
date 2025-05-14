@@ -25,36 +25,25 @@ const express = require('express')
 const router = express.Router()
 
 // Load Middleware
-const token = require('../middleware/token.js')
-const { dbAudit } = require('../middleware/db-audit.js')
-const requestLogger = require('../middleware/request-logger.js')
+const { dbAudit } = require('../middleware/dbAudit.js')
+const requestLogger = require('../middleware/requestLogger.js')
 
-// Load Routers
-const usersRouter = require('./userRoutes.js')
-const profileRouter = require('./profileRoutes.js')
-const discordRouter = require('./discordRoutes.js')
-const githubRouter = require('./githubRoutes.js')
-// Load Token Middleware
-router.use(token)
+// Load Routes
+const protectedRoutes = require('./protectedRoutes.js')
+const authRoutes = require('./authRoutes.js')
+const githubRoutes = require('./githubRoutes.js')
+const discordRoutes = require('./discordRoutes.js')
 
 // Load DB Audit Middleware
 router.use(dbAudit)
 
-// Configure Logging (after token)
 router.use(requestLogger)
 
-router.use('/users', usersRouter)
-router.use('/profile', profileRouter)
-router.use('/discord', discordRouter)
-router.use('/github', githubRouter)
-
-//Other routes from the program this api was lifted from, shouldn't be necessary but keeping around just in case.
-//router.use('/roles', roleRouter)
-//router.use('/platforms', platformsRouter)
-//router.use('/courses', coursesRouter)
-//router.use('/tools', toolsRouter)
-//router.use('/deployments', deploymentRouter)
-//router.use('/activities', activitiesRouter)
+//Routing
+router.use('/protected', protectedRoutes) //This route is for any sub route that requires authentication
+router.use('/auth', authRoutes) //This route is for authenticating users
+router.use('/github', githubRoutes)
+router.use('/discord', discordRoutes)
 
 /**
  * @swagger

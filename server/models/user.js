@@ -3,10 +3,16 @@ const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const logger = require('../configs/logger.js')
 const objection = require('objection')
-//const nanoid = require('nanoid')
+const knex = require('../configs/db.js');
 
 // Related Models
 const Role = require('./role.js')
+const Course = require('./course.js')
+const CourseStudent = require('./courseStudent.js')
+const CourseInstructor = require('./courseInstructor.js')
+const Program = require('./program.js')
+const UserProgram = require('./userProgram.js')
+const AcademicStatus = require('./academicStatus.js')
 
 //Random function for WID testing for now
 function getRandomInt(max) {
@@ -56,52 +62,195 @@ class User extends Model {
     return 'id'
   }
 
-  // Methods can be defined for model classes just as you would for
-  // any JavaScript class. If you want to include the result of these
-  // methods in the output json, see `virtualAttributes`.
-  //fullName() {
-  //  return this.firstName + ' ' + this.lastName;
-  //}
-  static async findOrCreate(email) {
+
+  //Method used to find or create a user, which is then passed into the web token
+  static async findOrCreate(email, wid) {
     let user = await User.query().where('email', email).limit(1)
     // user not found - create user
     if (user.length === 0) {
-      let admin = false
-      if (process.env.NODE_ENV !== 'production') {
-          admin = true
-      }
       user = [
         await User.query().insert({
           email: email,
           eid: email,
-          wid: getRandomInt(1000000000),
+          wid: wid,
           first_name: email,
           last_name: email,
-          is_admin: admin,
           profile_updated: false
         }),
       ]
-      if(process.env.NODE_ENV !== 'production'){
-        console.log("NOT IN PRODUCTION, SETTING USER ROLE TO API")
-        const defaultRoleId = 1;  // Assuming the default role has id 1
+      const defaultRoleId = 1;  // Assuming the default role has id 1
 
-        // Insert into the user_roles table
-        await User.relatedQuery('roles') 
-          .for(user[0].id) 
-          .relate(defaultRoleId);
-      }
+      // Insert into the user_roles table
+      await User.relatedQuery('roles') 
+        .for(user[0].id) 
+        .relate(defaultRoleId);
       logger.info('User ' + email + ' created')
     }
     return user[0]
   }
 
-  // static async findByRefreshToken(token) {
-  //   let user = await User.query().where('refresh_token', token).limit(1)
-  //   if (user.length === 0) {
-  //     return null
-  //   }
-  //   return user[0]
-  // }
+  //Method used when importing students from the file report
+  static async importStudent(studentLine) {
+    let user = await User.query().where('wid', studentLine["Student ID"]).limit(1)
+    //If there isn't a user
+    if (user.length === 0) {
+      const studentName = studentLine["Student Name"].split(', ')
+      //Copying this from the method above since we have more information than it expects
+      //Could make the method above more robust and just use it, currently not worried about that
+      user = [
+        await User.query().insert({
+          email: studentLine["Email"],
+          eid: studentLine["Email"].split('@')[0],
+          wid: studentLine["Student ID"],
+          first_name: studentName[1],
+          last_name: studentName[0],
+          profile_updated: false
+        }),
+      ]
+      const defaultRoleId = 1;  // Assuming the default role has id 1
+
+      // Insert into the user_roles table
+      await User.relatedQuery('roles') 
+        .for(user[0].id) 
+        .relate(defaultRoleId);
+      logger.info('User ' + email + ' created')
+}
+      const graduationInformation = studentLine["Classification"].split(' (')
+      //Now deal with major information
+      const majors = studentLine['Majors'].split(',')
+      majors.forEach(async major => {
+        //Majors are formatted as 'Name - Plan'
+        const parsed = major.split(' - ')
+        const program = await Program.findOrCreate(parsed[0], parsed[1])
+
+        //Check if the overall program exists yet
+        const joined = await User.relatedQuery('user_program').for(user[0].id).where('program_id', program.id).limit(1)
+        if(joined.length === 0) {
+          //If it does, connect the user's program to the overall
+          await User.relatedQuery('user_program')
+          .for(user[0].id)
+          .relate(
+            {
+              id: program.id,
+              assigned_advisor: studentLine["Assigned Staff"],
+              graduated: false,
+              withdrew: false,
+              dismissed: false,
+              program_gpa: studentLine['Cumulative GPA'],
+              classification: graduationInformation[0],
+              graduation_date: graduationInformation[1].substring(0, -1),
+              on_warning: false,
+            })
+        } else {
+          //If not, create both at the same time
+          await User.relatedQuery('user_program')
+          .for(user[0].id)
+          .patch(
+            {
+              assigned_advisor: studentLine["Assigned Staff"],
+              graduated: false,
+              withdrew: false,
+              dismissed: false,
+              program_gpa: studentLine['Cumulative GPA'],
+              classification: graduationInformation[0],
+              graduation_date: graduationInformation[1].substring(0, -1),
+              on_warning: false,
+            })
+          .where('program_id', program.id)
+        }
+        
+      });
+
+      //And now a quick insert into academic status
+      const academic_status = await AcademicStatus.query().where('user_id', user[0].id).limit(1)
+      if (academic_status.length === 0) {
+        await User.relatedQuery('academic_status')
+        .for(user[0].id)
+        .insert({
+          user_id: user[0].id,
+          gpa: studentLine['Cumulative GPA']
+        })
+      } else {
+        await User.relatedQuery('academic_status')
+        .for(user[0].id)
+        .patch({
+          gpa: studentLine['Cumulative GPA']
+        })
+      }
+  }
+
+  //Method used when importing enrollment information from the file
+  static async addEnrollment(enrollmentLine) {
+    let user = await User.query().where('wid', enrollmentLine["Student ID"]).limit(1)
+    //If there isn't a user
+    if (user.length === 0) {
+      const studentName = enrollmentLine["Student Name"].split(', ')
+      //Copying this from the method above since we have more information than it expects
+      //Could make the method above more robust and just use it, currently not worried about that
+      user = [
+        await User.query().insert({
+          email: enrollmentLine["Email"],
+          eid: enrollmentLine["Email"].split('@')[0],
+          wid: enrollmentLine["Student ID"],
+          first_name: studentName[1],
+          last_name: studentName[0],
+          profile_updated: false
+        }),
+      ]
+      const defaultRoleId = 1;  // Assuming the default role has id 1
+
+      // Insert into the user_roles table
+      await User.relatedQuery('roles') 
+        .for(user[0].id) 
+        .relate(defaultRoleId);
+      logger.info('User ' + email + ' created')
+    }
+    const splitDate = enrollmentLine["Start Date"].split('/')
+    const termCode = Course.createTermCode(splitDate[2], splitDate[1], splitDate[0])
+
+    //Find or create the course the line is talking about
+    let enrolledCourse = await Course.find(enrollmentLine["Enrollment Course Number"], termCode)
+    if (enrolledCourse === undefined) {
+      enrolledCourse = await Course.create(enrollmentLine["Enrollment Course Name"], enrollmentLine["Enrollment Course Number"],
+        enrollmentLine["Enrollment Section Name"], enrollmentLine["Credit Hours"], termCode
+      )
+    }
+    //And finally connect the two, adding all of the information that needs
+    //Check to see if a record already exists for that student in that class
+    const joined = await User.relatedQuery('course_students').for(user[0].id).where('course_id', enrolledCourse.id).limit(1)
+    if(joined.length === 0) {
+      //Create it
+      await User.relatedQuery('course_students')
+      .for(user[0].id)
+      .relate({
+        id: enrolledCourse.id,
+        grade: enrollmentLine["Final Grade"], 
+        ignore_in_gpa: false, 
+        dropped: enrollmentLine["Dropped?"], 
+        dropped_date: enrollmentLine["Dropped Date"], 
+        last_attendance: enrollmentLine["Last Date of Attendance"], 
+        midterm_grade: enrollmentLine["Midterm Grade"]})
+    } else {
+      //Updated it
+      await User.relatedQuery('course_students')
+      .for(user[0].id)
+      .patch({
+        grade: enrollmentLine["Final Grade"], 
+        ignore_in_gpa: false, 
+        dropped: enrollmentLine["Dropped?"], 
+        dropped_date: enrollmentLine["Dropped Date"], 
+        last_attendance: enrollmentLine["Last Date of Attendance"], 
+        midterm_grade: enrollmentLine["Midterm Grade"]})
+      .where('course_id', enrolledCourse.id)
+    }
+    
+
+    //And by finally, I mean we still need to connect the instructor
+    //I'm pretty sure I'll need to learn regexs for this, as the instructor string is "LastName, FirstName (WID) <email>"
+    //or I could try to come up with some really cursed split scheme
+    //might just be a task I'd leave for the next group
+    return;
+  }
 
   async updateRefreshToken() {
     var token = this.refresh_token
@@ -124,36 +273,82 @@ class User extends Model {
     return refresh_token
   }
 
+  static async get_academics(user_id) {
+    try {
+      const status = await knex('users') 
+        .join('academic_status', 'users.id', '=', 'academic_status.user_id')
+        .where('users.id', user_id) 
+        .select('user_id', 'gpa', 'warning', 'probation'); 
+        return status;
+    } catch (err) {
+      console.error('Error when fetching academic status:', err);
+      throw err;
+    }
+  }
+  // gets the admin user
   async get_admin() {
     const roles = await this.$relatedQuery('roles').for(this.id).select('name')
     //Roles for current user
-    //console.log(roles)
     return roles.some((r) => r.name === 'admin')
   }
 
   async is_api() {
     const roles = await this.$relatedQuery('roles').for(this.id).select('name')
     //Roles for current user
-    //console.log(roles)
     return roles.some((r) => r.name === 'api')
+  }
+  // Updatest the roles of selected user from admin page table. 
+  static async updateUserRoles(userId, roles) {
+    try {
+      // Get the user
+      const user = await User.query().findById(userId);
+  
+      if (!user) {
+        throw new Error(`User with ID ${userId} not found.`);
+      }
+  
+      // Remove all current roles for the user
+      await user.$relatedQuery('roles').unrelate();
+
+      if (Array.isArray(roles) && roles.length > 0) {
+       // Get the role id based on the names provided
+        const roleRecords = await Role.query()
+          .whereIn('name', roles)
+          .select('id');
+        
+        // Add the new roles
+        await user.$relatedQuery('roles').relate(
+          roleRecords.map(role => ({ id: role.id }))
+        );
+      }
+  
+      return true;
+    } catch (err) {
+      logger.error('Error updating user roles:', err);
+      throw err;
+    }
+  }
+// gets all roles from current user. 
+  async get_roles(){
+    const roles = await this.$relatedQuery('roles').for(this.id).select('name')
+    // Roles for current user
+    return roles.map(role => role.name)
   }
 
   static async getToken(id) {
     let user = await User.query().findById(id)
     // tokens are currently only for users with 'api' or 'admin' roles
     // should change this to pass role information in the token, and attach middleware to the api routes that should be admin only
-    const is_api = await user.is_api()
-    const is_admin = await user.get_admin()
-    if (is_api || is_admin) {
-    //Can pass role information in the token here,
-    //then use middleware like admin-required to check roles when accessing a route.
+    const roles = await user.get_roles()
+    if (roles) {
+    // Can pass role information in the token here,
+    // then use middleware like admin-required to check roles when accessing a route.
       const token = jwt.sign(
         {
           user_id: id,
           email: user.email,
-          is_admin: is_admin,
-          is_api: is_api,
-          //refresh_token: refresh_token,
+          roles: roles,
+          // refresh_token: refresh_token,
           profile_updated: user.profile_updated
         },
         process.env.TOKEN_SECRET,
@@ -193,7 +388,21 @@ class User extends Model {
       },
     }
   }
-
+  // query to grab all users with all propertires, discord id, and all roles. 
+  static async queryAllUsers() {
+    const allUsers = await this.query()
+      .leftJoin('user_discord', 'users.id', 'user_discord.user_id')
+      .leftJoin('user_roles', 'users.id', 'user_roles.user_id')
+      .leftJoin('roles', 'user_roles.role_id', 'roles.id')
+      .select(
+        'users.*',
+        'user_discord.discord_id',
+        knex.raw(`COALESCE(json_agg(roles.name) FILTER (WHERE roles.name IS NOT NULL), '[]') AS roles`)
+      )
+      .groupBy('users.id', 'user_discord.discord_id');
+  
+    return allUsers;
+  }
   // This object defines the relations to other models.
   static get relationMappings() {
     return {
@@ -215,13 +424,62 @@ class User extends Model {
         },
         filter: (builder) => builder.select('id'),
       },
+      course_students: {
+        relation: Model.ManyToManyRelation,
+        modelClass: Course,
+        join: {
+          from: 'users.id',
+          through: {
+            modelClass: CourseStudent,
+            from: 'course_students.user_id',
+            to: 'course_students.course_id',
+            extra:['grade', 'ignore_in_gpa', 'dropped', 'dropped_date', 'last_attendance', 'midterm_grade']
+          },
+          to: 'courses.id'
+        }
+      },
+      course_instructors: {
+        relation: Model.ManyToManyRelation,
+        modelClass: Course,
+        join: {
+          from: 'users.id',
+          through: {
+            modelClass: CourseInstructor,
+            from: 'course_instructors.user_id',
+            to: 'course_instructors.course_id'
+          },
+          to: 'courses.id'
+        }
+      },
+      user_program: {
+        relation: Model.ManyToManyRelation,
+        modelClass: Program,
+        join: {
+          from: 'users.id',
+          through: {
+            modelClass: UserProgram,
+            from: 'user_program.user_id',
+            to: 'user_program.program_id',
+            extra: ['assigned_advisor', 'graduated', 'withdrew', 'dismissed', 'program_gpa', 'classification', 'graduation_date', 'on_warning']
+          },
+          to: 'programs.id'
+        }
+      },
+      academic_status: {
+        relation: Model.HasOneRelation,
+        modelClass: AcademicStatus,
+        join: {
+          from: 'users.id',
+          to: 'academic_status.user_id'
+        }
+      }
     }
   }
 
   async $beforeInsert() {
-    //this.slug = nanoid()
+    // this.slug = nanoid()
     let user = await User.query().where('email', this.email).limit(1)
-    // user not found - create user
+    // Email is already in use
     if (user.length !== 0) {
       throw new objection.ValidationError({
         message: 'email should be unique',

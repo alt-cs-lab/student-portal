@@ -2,7 +2,8 @@
 
 const jwt = require('jsonwebtoken')
 // Load Models
-// const User = require('../models/user')
+const User = require('../models/user')
+const Role = require('../models/role.js')
 
 // Load Logger
 const logger = require('../configs/logger.js')
@@ -30,24 +31,28 @@ async function authenticateToken(req, res, next) {
 
     req.user_id = user.user_id
     req.user_email = user.email
-    // HACK This trusts the JWT signature to give admin privs.
-    // See below for a DB method for this - less efficient.
-    req.is_admin = user.is_admin
 
-    // // check if admin
-    // const roles = await User.relatedQuery('roles')
-    //   .for(req.user_id)
-    //   .select('name')
-    // //Roles for current user
-    // //console.log(roles)
-    // if (roles.some((r) => r.name === 'admin')) {
-    //   req.is_admin = true
-    // } else {
-    //   req.is_admin = false
-    // }
-
-    next()
-  })
+    try {
+      // Fetch the user by ID using the User model
+      const user = await User.query().findById(req.user_id);
+    
+      if (!user) {
+        logger.error('User not found');
+        return res.status(404).send('User not found');
+      }
+    
+      // Supplies the users roles/permissions
+      const roles = await user.get_roles();
+      req.roles = roles;
+    
+      // Continue with the request
+      next();
+    
+    } catch (error) {
+      logger.error('Error checking user roles: ' + error);
+      return res.status(500).send('Internal Server Error');
+    }
+  });
 }
 
 module.exports = authenticateToken

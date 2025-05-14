@@ -2,7 +2,7 @@ const db = require('../configs/db.js')
 const Model = require('objection').Model
 const AjvValidator = require('objection').AjvValidator
 const addFormats = require('ajv-formats')
-const { asyncLocalStorage } = require('../middleware/db-audit')
+const { asyncLocalStorage } = require('../middleware/dbAudit.js')
 
 Model.knex(db)
 

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -25,15 +23,16 @@ services:
       DB_NAME: postgres
       DB_PORT: 5432
       SERVER_PORT: 3002
+      SERVER_URL: "https://${CODESPACE_NAME}-3002.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
       API_URL: http://localhost:3000
-      # CAS_HOST: http://testcas.cs.ksu.edu/
       CAS_URL: https://testcas.cs.ksu.edu
       CAS_SERVICE_URL: "https://${CODESPACE_NAME}-5173.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
       CAS_DEV_MODE: false
       CAS_DEV_USER: testcas
-      CAS_REDIRECT_URL: /auth/login
+      CAS_REDIRECT_URL: /api/v1/auth/login
       TOKEN_SECRET: "secret_hex"
-      SERVER_URL: "https://${CODESPACE_NAME}-3002.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+      DISCORD_SERVER_ID: "1285994775282978900"
+      DISCORD_WELCOME_CHANNEL: "1306295646248239134"
 
   postgres:
     image: postgres:12

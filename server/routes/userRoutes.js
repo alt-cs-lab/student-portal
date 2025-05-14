@@ -2,7 +2,8 @@
  * @swagger
  * tags:
  *   name: Users
- *   description: Users API
+ *   description: Admin level API to get information about all users
+ *   base-file-route: /api/v1/protected/users/
  */
 
 // Load Libraries
@@ -10,7 +11,7 @@ const express = require('express')
 const router = express.Router()
 
 // Load Middleware
-const adminOnly = require('../middleware/admin-required.js')
+const adminOnly = require('../middleware/adminRequired.js')
 
 // Load Models
 const User = require('../models/user.js')

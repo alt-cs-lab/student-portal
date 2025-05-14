@@ -2,7 +2,8 @@
  * @swagger
  * tags:
  *   name: Discord
- *   description: Discord API
+ *   description: API to connect with a user's Discord account. User-level
+ *   base-file-route: /api/v1/discord
  */
 
 // Load Libraries
@@ -12,15 +13,18 @@ const axios = require('axios');
 const qs = require('qs');
 const db = require('../configs/db.js')
 const crypto = require('crypto')
-const discord = require('../linked-roles/discord.js')
-const storage = require('../linked-roles/storage.js')
+const discord = require('../linkedRoles/discord.js')
+const storage = require('../linkedRoles/storage.js')
+const discordbot = require('../discordBot/discordbot.js');
+const { setDefaultAutoSelectFamily } = require('net');
 
 /* Discord */
 router.get('/', async (req,res) => {
   const clientId = process.env.DISCORD_CLIENT_ID;
   const userId = req.query.state;
-  res.redirect(`https://discord.com/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${process.env.SERVER_URL}%2Fdiscord%2Fcallback&scope=identify&state=${userId}`)
+  res.redirect(`https://discord.com/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${process.env.SERVER_URL}%2Fapi%2Fv1%2Fdiscord%2Fcallback&scope=identify&state=${userId}`)
 })
+
 router.delete('/', async (req,res) => {
   const userId = req.query.userId;
   if (!userId) {
@@ -43,7 +47,7 @@ router.get('/callback', async (req, res) => {
     client_id: process.env.DISCORD_CLIENT_ID,
     client_secret: process.env.DISCORD_CLIENT_SECRET,
     code: code,
-    redirect_uri: `${process.env.SERVER_URL}/discord/callback`,
+    redirect_uri: `${process.env.SERVER_URL}/api/v1/discord/callback`,
     grant_type: 'authorization_code',
   });
 
@@ -78,11 +82,12 @@ router.get('/callback', async (req, res) => {
     res.status(500).send('Authentication failed');
   }
 });
+
 router.get('/linked-roles', async (req,res) => {
     const state = crypto.randomUUID();
     const url = new URL('https://discord.com/api/oauth2/authorize');
     url.searchParams.set('client_id', process.env.DISCORD_CLIENT_ID);
-    url.searchParams.set('redirect_uri', `${process.env.SERVER_URL}/discord/role-callback`);
+    url.searchParams.set('redirect_uri', `${process.env.SERVER_URL}/api/v1/discord/role-callback`);
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('state', state);
     url.searchParams.set('scope', 'role_connections.write identify');
@@ -90,6 +95,7 @@ router.get('/linked-roles', async (req,res) => {
     res.cookie('clientState', state, { maxAge: 1000 * 60 * 5, signed: true });
     res.redirect(url);
 })
+
 router.get('/role-callback', async(req, res) => {
   try {
     // 1. Uses the code and state to acquire Discord OAuth2 tokens
@@ -178,6 +184,28 @@ router.get('/username', async (req,res) => {
     res.json({ username: '' });
   }
 })
-
+// Used to refresh all discord roles then returns true if successfull.
+router.post('/refreshDiscordRoles', async function (req, res, next) {
+  try {
+    const result = discordbot.handleAllStudentRoles();
+    res.json({result: true});
+  } catch (error) {
+    console.log(error);
+    res.status(500).send('Server error');
+    res.json(false);
+  }
+})
+// Used to refresh specific student of all discord roles and then returns true if successfull. 
+router.post('/refreshStudentRoles', async function (req, res, next) {
+  try {
+    const discordID = req.body.user;
+    await discordbot.handleSelectStudentRoles(discordID);
+    res.json(true);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send('Server error');
+    res.json(false);
+  }
+})
   
 module.exports = router

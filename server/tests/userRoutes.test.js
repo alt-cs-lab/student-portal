@@ -32,7 +32,7 @@ let adminUser = {
   const getAllUsers = (adminUser) => {
     it('should list all users', (done) => {
       request(server)
-        .get('/api/v1/users/')
+        .get('/api/v1/protected/users/')
         .set('Authorization', `Bearer ${adminUser.token}`)
         .expect(200)
         .end((err, res) => {
@@ -76,7 +76,7 @@ let adminUser = {
       additionalProperties: false,
     }
     request(server)
-      .get('/api/v1/users/')
+      .get('/api/v1/protected/users/')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .expect(200)
       .end((err, res) => {
@@ -98,7 +98,7 @@ const putUser = (adminUser) => {
       roles: [r]
     }
     request(server)
-      .put('/api/v1/users/')
+      .put('/api/v1/protected/users/')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .send({
         user: newuser,
@@ -127,14 +127,14 @@ const addUserIgnoresAdditionalProperties = (adminUser) => {
       roles: [r]
     }
     request(server)
-      .put('/api/v1/users/')
+      .put('/api/v1/protected/users/')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .send({ adminUser: newuser })
       .end((err, res) => {
         if (err) return done(err)
         res.status.should.equal(201)
         request(server)
-          .get('/api/v1/users/')
+          .get('/api/v1/protected/users/')
           .set('Authorization', `Bearer ${adminUser.token}`)
           .expect(200)
           .end((err, res) => {
@@ -162,7 +162,7 @@ const addUserFailsOnDuplicateEid = (adminUser) => {
       roles: [r]
     }
     request(server)
-      .put('/api/v1/users/')
+      .put('/api/v1/protected/users/')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .send({ adminUser: newuser })
       .expect(422)
@@ -184,7 +184,7 @@ const addUserFailsOnMissingProperties = (adminUser) => {
       roles: [r]
     }
     request(server)
-      .put('/api/v1/users/')
+      .put('/api/v1/protected/users/')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .send({ adminUser: newuser_noeid })
       .expect(422)
@@ -197,7 +197,7 @@ const addUserFailsOnMissingProperties = (adminUser) => {
           roles: [r]
         }
         request(server)
-          .put('/api/v1/users/')
+          .put('/api/v1/protected/users/')
           .set('Authorization', `Bearer ${adminUser.token}`)
           .send({ adminUser: newuser_noname })
           .expect(422)
@@ -221,14 +221,14 @@ const addUserFailsOnMissingProperties = (adminUser) => {
         roles: [r]
       }
       request(server)
-        .post('/api/v1/users/' + newuser.id)
+        .post('/api/v1/protected/users/' + newuser.id)
         .set('Authorization', `Bearer ${adminUser.token}`)
         .send({ adminUser: newuser })
         .end((err, res) => {
           if (err) return done(err)
           res.status.should.equal(200)
           request(server)
-            .get('/api/v1/users/')
+            .get('/api/v1/protected/users/')
             .set('Authorization', `Bearer ${adminUser.token}`)
             .expect(200)
             .end((err, res) => {
@@ -255,14 +255,14 @@ const addUserFailsOnMissingProperties = (adminUser) => {
       roles: [r]
     }
       request(server)
-        .post('/api/v1/users/' + newuser.id)
+        .post('/api/v1/protected/users/' + newuser.id)
         .set('Authorization', `Bearer ${adminUser.token}`)
         .send({ adminUser: newuser })
         .end((err, res) => {
           if (err) return done(err)
           res.status.should.equal(200)
           request(server)
-            .get('/api/v1/users/')
+            .get('/api/v1/protected/users/')
             .set('Authorization', `Bearer ${adminUser.token}`)
             .expect(200)
             .end((err, res) => {
@@ -291,7 +291,7 @@ const addUserFailsOnMissingProperties = (adminUser) => {
       roles: [r]
     }
       request(server)
-        .post('/api/v1/users/' + newuser_noeid.id)
+        .post('/api/v1/protected/users/' + newuser_noeid.id)
         .set('Authorization', `Bearer ${adminUser.token}`)
         .send({ adminUser: newuser_noeid })
         .expect(422)
@@ -304,7 +304,7 @@ const addUserFailsOnMissingProperties = (adminUser) => {
             roles: [r]
           } 
           request(server)
-        .post('/api/v1/users/' + newuser_noname.id)
+        .post('/api/v1/protected/users/' + newuser_noname.id)
         .set('Authorization', `Bearer ${adminUser.token}`)
         .send({ adminUser: newuser_noeid })
         .expect(422)
@@ -328,7 +328,7 @@ const updateUserFailsOnInvalidName = (adminUser) => {
         roles: [r]
       }
     request(server)
-      .post('/api/v1/users/' + newuser.id)
+      .post('/api/v1/protected/users/' + newuser.id)
       .set('Authorization', `Bearer ${adminUser.token}`)
       .send({ adminUser: newuser })
       .expect(422)
@@ -343,13 +343,13 @@ const updateUserFailsOnInvalidName = (adminUser) => {
 const deleteUser = (adminUser) => {
   it('should delete a user', (done) => {
     request(server)
-      .delete('/api/v1/users/1')
+      .delete('/api/v1/protected/users/1')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .expect(200)
       .end((err) => {
         if (err) return done(err)
         request(server)
-          .get('/api/v1/users/')
+          .get('/api/v1/protected/users/')
           .set('Authorization', `Bearer ${adminUser.token}`)
           .expect(200)
           .end((err, res) => {
@@ -367,7 +367,7 @@ const deleteUser = (adminUser) => {
 const deleteUserFailsOnInvalidId = (adminUser) => {
   it('should fail on invalid id', (done) => {
     request(server)
-      .delete('/api/v1/users/999')
+      .delete('/api/v1/protected/users/999')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .expect(422)
       .end((err) => {
@@ -382,7 +382,7 @@ const deleteUserFailsOnInvalidId = (adminUser) => {
 const getAllUsersRequiresAdminRole = (adminUser) => {
   it('should require the admin role', (done) => {
     request(server)
-      .get('/api/v1/users/')
+      .get('/api/v1/protected/users/')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .expect(403)
       .end((err) => {
@@ -396,7 +396,7 @@ const getAllUsersRequiresAdminRole = (adminUser) => {
 const putUserRequiresAdminRole = (adminUser) => {
   it('should require the admin role', (done) => {
     request(server)
-      .put('/api/v1/users/')
+      .put('/api/v1/protected/users/')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .expect(403)
       .end((err) => {
@@ -410,7 +410,7 @@ const putUserRequiresAdminRole = (adminUser) => {
 const postUserRequiresAdminRole = (adminUser) => {
   it('should require the admin role', (done) => {
     request(server)
-      .post('/api/v1/users/1')
+      .post('/api/v1/protected/users/1')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .expect(403)
       .end((err) => {
@@ -424,7 +424,7 @@ const postUserRequiresAdminRole = (adminUser) => {
 const deleteUserRequiresAdminRole = (adminUser) => {
   it('should require the admin role', (done) => {
     request(server)
-      .delete('/api/v1/users/1')
+      .delete('/api/v1/protected/users/1')
       .set('Authorization', `Bearer ${adminUser.token}`)
       .expect(403)
       .end((err) => {
